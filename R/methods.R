@@ -42,11 +42,11 @@ estimateDispersions.DEXSeqDataSet <-
     BPPARAM=BPPARAM )
 
   mergeObject <- do.call( rbind, splitObject )
-  mcols(object) <- mcols( mergeObject )
-  assays(object) <- assays(mergeObject)
+  matchedNames <- match( rownames(object), rownames(mergeObject))  
+  mcols(object) <- mcols( mergeObject )[matchedNames,]
+  assays(object) <- assays(mergeObject[matchedNames,])
 
   mcols(object)$baseMean <- mcols(object)$exonBaseMean
-#  library(genefilter)
   mcols(object)$baseVar <- mcols(object)$exonBaseVar
   mcols(object)$allZero <- unname( rowSums( featureCounts(object)) == 0 |
       rowSums(counts(object, normalized = TRUE)[, colData(object)$exon == "others"]) ==0 )
@@ -63,7 +63,9 @@ estimateDispersions.DEXSeqDataSet <-
       }, 
     BPPARAM=BPPARAM )
 
-  mcols(object) <- mcols( do.call( rbind, splitObject ) )
+  mergeObject <- do.call( rbind, splitObject ) 
+  matchedNames <- match( rownames(object), rownames(mergeObject) ) 
+  mcols(object) <- mcols( mergeObject )[matchedNames,]
   mcols(object)$baseMean <- unname( rowMeans( counts(object) ) )
   mcols(object)$baseVar <- unname( rowVars( counts(object) ) )
   mcols(object)$dispersion <- pmin( mcols(object)$dispersion, ncol(object) )
@@ -105,15 +107,15 @@ plotMA.DEXSeqDataSet <- function( object, alpha=0.1, ylim=c(-2, 2), foldChangeCo
     y <- dexseqResults[,foldChangeColumn]
   }
   x <- rowMeans( featureCounts(object, normalized=TRUE) )
-  df <- data.frame( x, y, results(object)$padj < 0.1 )
-  ylim=c(-2, 2)
+  df <- data.frame( x, y, results(object)$padj < alpha )
+#  ylim=c(-2, 2)
   plotMA(df, ylim, ... )
 }
 
 setMethod("plotMA", signature(object="DEXSeqDataSet"),
           plotMA.DEXSeqDataSet)
 
-plotMA.DEXSeqResults <- function(object, alpha=0.1, ylim=c(-2, 2), foldChangeColumn=NULL, ...){
+plotMA.DEXSeqResults <- function(object, alpha=0.1, ylim=c(-2,2), foldChangeColumn=NULL, ...){
   stopifnot( is(object, "DEXSeqResults") )
   x <- rowMeans( counts(object, normalized=TRUE) )
   dexseqResults <- object[,which( elementMetadata( object )$type == "DEXSeq results" )]
@@ -122,8 +124,8 @@ plotMA.DEXSeqResults <- function(object, alpha=0.1, ylim=c(-2, 2), foldChangeCol
   }else{
     y <- dexseqResults[,foldChangeColumn]
   }
-  df <- data.frame( x, y, object$padj < 0.1 )
-  ylim=c(-2, 2)
+  df <- data.frame( x, y, object$padj < alpha )
+#  ylim=c(-2, 2)
   plotMA(df, ylim, ... )
 }
 
