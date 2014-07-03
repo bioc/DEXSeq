@@ -46,6 +46,7 @@ export(
 ### NEW FUNCTIONS
   DEXSeqDataSet,
   DEXSeqDataSetFromHTSeq,
+  DEXSeqDataSetFromSE,
   DEXSeqResults,
   estimateExonFoldChanges,
   DEXSeq,
