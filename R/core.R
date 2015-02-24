@@ -85,7 +85,8 @@ testForDEU <-
 estimateExonFoldChanges <- function( object,
                                     fitExpToVar = "condition",
                                     denominator = "",
-                                    BPPARAM=MulticoreParam(workers=1) )
+                                    BPPARAM=MulticoreParam(workers=1), 
+                                    maxRowsMF=3000)
 {
     stopifnot(is(object, "DEXSeqDataSet"))
     if (any(is.na(sizeFactors(object)))) {
@@ -101,7 +102,9 @@ estimateExonFoldChanges <- function( object,
       stop("please call testForDEU first")
     }
     frm <- as.formula(paste("count ~", fitExpToVar, "* exon"))
-    testablegenes <- as.character( unique( groupIDs(object)[!is.na( results(object)$padj )] ) )
+    notNAs <- !is.na( results(object, 
+       filter=rowMeans( featureCounts(object, normalized=TRUE) ))$padj )
+    testablegenes <- unique(groupIDs(object)[notNAs])
     groups <- groupIDs(object)
     features <- featureIDs(object)
     exonCounts <- featureCounts( object )
@@ -128,7 +131,7 @@ estimateExonFoldChanges <- function( object,
            newMf[i,"count"] <- countsThis[as.character(newMf[i,"exon"]), as.character(newMf[i,"sample"])]
         }
         newMf <- droplevels( newMf )
-        coefficients <- fitAndArrangeCoefs( frm, balanceExons = TRUE, mf=newMf)
+        coefficients <- fitAndArrangeCoefs( frm, balanceExons = TRUE, mf=newMf, maxRowsMF=maxRowsMF)
         if (is.null(coefficients)) {
             return(coefficients)
         }
@@ -178,8 +181,8 @@ estimateExonFoldChanges <- function( object,
 
 DEXSeqResults <- function( object ){
   stopifnot( is(object, "DEXSeqDataSet"))
-  LRTresults <- results(object, filter=rowMeans( featureCounts(object) ) )
-  LRTresults$exonBaseMean <- rowMeans(featureCounts(object))
+  LRTresults <- results(object, filter=rowMeans( featureCounts(object, normalized=TRUE) ) )
+  LRTresults$exonBaseMean <- rowMeans(featureCounts(object, normalized=TRUE))
   LRTresults$featureID <- mcols(object)$featureID
   LRTresults$groupID <- mcols(object)$groupID
   LRTresults$dispersion <- mcols(object)$dispersion
