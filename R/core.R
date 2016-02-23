@@ -88,7 +88,7 @@ estimateExonFoldChanges <- function( object,
                                     fitExpToVar = "condition",
                                     denominator = "",
                                     BPPARAM=MulticoreParam(workers=1), 
-                                    maxRowsMF=3000)
+                                    maxRowsMF=3000, independentFiltering=TRUE, filter)
 {
     stopifnot(is(object, "DEXSeqDataSet"))
     # Temporary hack for backward compatibility with "old" DEXSeqDataSet
@@ -109,11 +109,20 @@ estimateExonFoldChanges <- function( object,
       stop("please call testForDEU first")
     }
     frm <- as.formula(paste("count ~", fitExpToVar, "* exon"))
-    notNAs <- !is.na( results(object, 
-       filter=rowMeans( featureCounts(object, normalized=TRUE) ))$padj )
+    if( independentFiltering ){
+        if( missing(filter) ){
+            filter=rowMeans(featureCounts(object, normalized = TRUE))
+        }
+        notNAs <- !is.na( results(object, filter=filter)$padj )
+    }else{
+ #       notNAs <- rowSums( featureCounts(object) ) > ncol(object)
+        notNAs <- rep(TRUE, nrow(object))
+    }
     testablegenes <- unique(groupIDs(object)[notNAs])
     groups <- groupIDs(object)
     disps <- dispersions(object)
+#	disps <- pmin(disps, 1e-6)
+    disps[is.na(disps)] <- 1e-6
     mf <- object@modelFrameBM
     numsamples <- nrow( sampleAnnotation(object) )
     features <- featureIDs(object)
@@ -181,14 +190,17 @@ estimateExonFoldChanges <- function( object,
 }
 
 
-DEXSeqResults <- function( object ){
+DEXSeqResults <- function( object, independentFiltering=TRUE, filter){
   stopifnot( is(object, "DEXSeqDataSet"))
   # Temporary hack for backward compatibility with "old" DEXSeqDataSet
   # objects. Remove once all serialized DEXSeqDataSet objects around have
   # been updated.
   if (!.hasSlot(object, "rowRanges"))
       object <- updateObject(object)
-  LRTresults <- results(object, filter=rowMeans( featureCounts(object, normalized=TRUE) ) )
+  if( missing( filter ) ){
+      filter=rowMeans( featureCounts( object, normalized=TRUE ) )
+  }
+  LRTresults <- results(object, filter=filter, independentFiltering=independentFiltering )
   LRTresults$exonBaseMean <- rowMeans(featureCounts(object, normalized=TRUE))
   LRTresults$featureID <- mcols(object)$featureID
   LRTresults$groupID <- mcols(object)$groupID
