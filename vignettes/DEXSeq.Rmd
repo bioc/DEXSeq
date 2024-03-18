@@ -79,7 +79,8 @@ Here we use the function `exonicParts()` of the package `r BiocStyle::Biocpkg("G
 
 ```{r, warning=FALSE}
 
-library(GenomicFeatures)
+library(GenomicFeatures)  # for the exonicParts() function
+library(txdbmaker)        # for the makeTxDbFromGFF() function
 download.file(
     "https://ftp.ensembl.org/pub/release-62/gtf/drosophila_melanogaster/Drosophila_melanogaster.BDGP5.25.62.gtf.gz",
     destfile="Drosophila_melanogaster.BDGP5.25.62.gtf.gz")

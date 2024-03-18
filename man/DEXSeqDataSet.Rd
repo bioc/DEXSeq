@@ -136,9 +136,10 @@
 
   library(GenomicRanges)
   library(GenomicFeatures)
+  library(txdbmaker)
   library(GenomicAlignments)
 
-  hse <- makeTxDbFromBiomart( biomart="ensembl",
+  hse <- makeTxDbFromBiomart(biomart="ensembl",
                              dataset="hsapiens_gene_ensembl",
                              host="grch37.ensembl.org")
 
