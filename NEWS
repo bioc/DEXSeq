@@ -84,3 +84,8 @@ CHANGES IN VERSION 1.17.28
     o Added support for estimating fold change rates with continous variables.
     o Reduced RAM usage when parallelizing
 
+CHANGES IN VERSION 1.59.1
+-------------------------
+
+    o Fixed a bug where quotes in data files could lead to an error in `DEXSeqDataSetFromHTSeq()`. Thanks to multiple reported in issue #15.
+
