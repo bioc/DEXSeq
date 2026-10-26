@@ -285,8 +285,13 @@ DEXSeqDataSetFromHTSeq <- function( countfiles, sampleData, design= ~ sample + e
     if( !all( sapply(countfiles, class) == 'character' ) ){
         stop("The countfiles parameter must be a character vector")
     }
-    lf <- lapply( countfiles, function(x)
-        read.table( x, header=FALSE,stringsAsFactors=FALSE ) )
+    lf <- lapply( countfiles, function(x) {
+        # quote="" because some count files have quoted IDs ("gene":"exon"),
+        # which read.table would otherwise split into extra columns
+        ct <- read.table( x, header=FALSE, stringsAsFactors=FALSE, quote="" )
+        ct$V1 <- gsub( "\"", "", ct$V1 )
+        ct
+    })
     if( !all( sapply( lf[-1], function(x) all( x$V1 == lf[1]$V1 ) ) ) )
         stop( "Count files have differing gene ID column." )
     dcounts <- sapply( lf, `[[`, "V2" )
